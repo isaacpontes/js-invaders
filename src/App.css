@@ -1,0 +1,22 @@
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid #226399;
+  padding-right: 2rem;
+  margin: 0 auto;
+  max-width: 640px;
+}
+
+#game {
+  flex-grow: 1;
+  position: relative;
+}
+
+#player {
+  background-color: #226399;
+  height: 2rem;
+  width: 2rem;
+  position: absolute;
+  transition: .1s linear;
+}
