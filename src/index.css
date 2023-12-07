@@ -30,12 +30,12 @@ a:hover {
 
 body {
   height: 100vh;
+  overflow: hidden;
 }
 
 h1 {
   font-size: 2rem;
   text-align: center;
-  margin-left: 2rem;
 }
 
 button {
