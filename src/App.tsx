@@ -1,10 +1,47 @@
 import { useEffect, useRef } from "react"
 import "./App.css"
 
+const enemyTypes = {
+  basic: `<div class="enemy-row basic"}>
+    <span class="enemy"></span>
+    <span class="enemy"></span>
+    <span class="enemy"></span>
+    <span class="enemy"></span>
+    <span class="enemy"></span>
+    <span class="enemy"></span>
+    <span class="enemy"></span>
+    <span class="enemy"></span>
+  </div>`,
+  fast: `<div class="enemy-row fast"}>
+    <span class="enemy"></span>
+    <span class="enemy"></span>
+    <span class="enemy"></span>
+    <span class="enemy"></span>
+    <span class="enemy"></span>
+    <span class="enemy"></span>
+    <span class="enemy"></span>
+    <span class="enemy"></span>
+  </div>`
+}
+
+
+function checkCollision(elm1: Element, elm2: Element) {
+  var elm1Rect = elm1.getBoundingClientRect()
+  var elm2Rect = elm2.getBoundingClientRect()
+
+  return (
+    (elm1Rect.right >= elm2Rect.left && elm1Rect.left <= elm2Rect.right) &&
+    (elm1Rect.bottom >= elm2Rect.top && elm1Rect.top <= elm2Rect.bottom)
+  )
+}
+
 function App() {
+  let score = 0
+  let isReloading = false
   const playerRef = useRef<HTMLDivElement>(null)
   
   const shoot = () => {
+    if (isReloading) return
     console.log("PEW!")
     if (!playerRef.current) return
     const game = document.getElementById("game")
@@ -13,7 +50,9 @@ function App() {
     missile.className = "missile"
     missile.style.left = `calc(${playerRef.current.style.left} + 0.9rem)`
     game.appendChild(missile)
+    isReloading = true
     setTimeout(() => missile.remove() , 1000)
+    setTimeout(() => isReloading = false, 500)
   }
 
   const process = (event: KeyboardEvent) => {
@@ -43,65 +82,67 @@ function App() {
 
   useEffect(() => {
     const spawnerId = setInterval(() => {
+      const enemiesDiv = document.getElementById("enemies")
+      if (!enemiesDiv) return
+      let type: "basic" | "fast" = "basic"
+      if (score >= 50) type = Math.random() > 0.5 ? "fast" : "basic"
+      enemiesDiv.innerHTML += enemyTypes[type]
+    }, 10 * 1000)
 
+    const collisionCheckerId = setInterval(() => {
+      const missiles = document.querySelectorAll(".missile")
+      const enemies = document.querySelectorAll(".enemy:not(.dead)")
+      missiles.forEach((missile) => {
+        enemies.forEach((enemy) => {
+          const isColliding = checkCollision(missile, enemy)
+          if (isColliding) {
+            missile.remove()
+            enemy.classList.add("dead")
+            score++
+            document.getElementById("score")!.innerText = score.toString()
+          }
+        })
+      })
+    }, 1)
+
+    const deadRowCleanerId = setInterval(() => {
+      const deadRows = document.querySelectorAll(".enemy-row:first-child:not(:has(.enemy:not(.dead)))")
+      deadRows.forEach((row) => row.remove())
+    }, 2000)
+
+    const deathCheckerId = setInterval(() => {
+      const enemies = document.querySelectorAll(".enemy:not(.dead)")
+      enemies.forEach((enemy) => {
+        if (!playerRef.current) return
+        const isColliding = checkCollision(enemy, playerRef.current)
+        if (!isColliding) return
+        alert("YOU DIED!!!")
+        score = 0
+        document.getElementById("enemies")!.innerHTML = enemyTypes["basic"]
+        document.getElementById("score")!.innerText = score.toString()
+      })
     })
 
     return () => {
       clearInterval(spawnerId)
+      clearInterval(collisionCheckerId)
+      clearInterval(deadRowCleanerId)
+      clearInterval(deathCheckerId)
     }
   }, [])
 
   return (
     <>
-      <h1>Space Invaders</h1>
+      <h1>Space Invaders - Score: <span id="score">{score}</span></h1>
+      
       <div id="game">
         <div id="enemies">
-          <div className="enemy-row">
+          <div className="enemy-row basic">
             <span className="enemy"></span>
             <span className="enemy"></span>
             <span className="enemy"></span>
             <span className="enemy"></span>
             <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-          </div>
-          <div className="enemy-row">
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-          </div>
-          <div className="enemy-row">
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-          </div>
-          <div className="enemy-row">
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-          </div>
-          <div className="enemy-row">
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy dead"></span>
             <span className="enemy"></span>
             <span className="enemy"></span>
             <span className="enemy"></span>
