@@ -1,10 +1,32 @@
-#root {
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+#jsInvaders {
   display: flex;
   flex-direction: column;
-  height: 100%;
   border: 1px solid #226399;
   margin: 0 auto;
-  max-width: 640px;
+  width: 640px;
+  height: 480px;
+  overflow: hidden;
+
+  font-family: "Press Start 2P", sans-serif;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .5rem;
 }
 
 #game {
@@ -13,12 +35,12 @@
 }
 
 #enemies {
-  background-color: #333;
+  background-color: #1a1a1a;
   display: flex;
   flex-direction: column-reverse;
   align-items: center;
   justify-content: start;
-  gap: .5rem;
+  gap: 16px;
   height: 100%;
   padding: 1rem 10%;
   transition: .5s;
@@ -27,15 +49,17 @@
 .enemy-row {
   animation: enemy-row-movement 10s infinite;
   display: flex;
-  gap: 1rem;
+  gap: 24px;
   position: relative;
 }
 
 .enemy {
   background-color: #a83dff;
   border-radius: 999px;
-  height: 1rem;
-  width: 1rem;
+  display: grid;
+  place-content: center;
+  height: 16px;
+  width: 16px;
   transition: .4s;
 }
 
@@ -46,23 +70,38 @@
   background-color: #fcff31;
 }
 
+.enemy-row.basic.reverse {
+  animation: enemy-row-movement-reverse 10s infinite;
+}
+
+.enemy-row.fast.reverse {
+  animation: enemy-row-movement-reverse 5s infinite;
+}
+
 .enemy.dead {
   opacity: 0;
 }
 
 #player {
-  background-color: #f64348;
-  height: 2rem;
-  width: 2rem;
+  height: 16px;
+  width: 16px;
   position: absolute;
-  /* z-index: 10; */
+  z-index: 10;
+}
+
+#player-collider {
+  height: 10px;
+  width: 1280px;
+  position: absolute;
+  left: -640px;
+  top: 20px;
 }
 
 .missile {
   animation: missile-shot 1s linear;
-  background-color: #fcff31;
-  height: 1rem;
-  width: .125rem;
+  background-color: #15ff28;
+  height: 10px;
+  width: 2px;
   opacity: 0;
   position: absolute;
   top: 92%;
@@ -74,7 +113,7 @@
   }
 
   25% {
-    left: 24vw;
+    left: 160px;
   }
 
   50% {
@@ -82,7 +121,29 @@
   }
 
   75% {
-    left: -24vw;
+    left: -160px;
+  }
+
+  100% {
+    left: 0;
+  }
+}
+
+@keyframes enemy-row-movement-reverse {
+  0% {
+    left: 0;
+  }
+
+  25% {
+    left: -160px;
+  }
+
+  50% {
+    left: 0;
+  }
+
+  75% {
+    left: 160px;
   }
 
   100% {
@@ -106,27 +167,39 @@
   }
 }
 
+#gameover {
+  display: grid;
+  place-content: center;
+  height: 100%;
+  text-align: center;
+}
 
-@media screen and (min-width: 1280px) {
-  @keyframes enemy-row-movement {
-    0% {
-      left: 0;
-    }
-  
-    25% {
-      left: 12vw;
-    }
-  
-    50% {
-      left: 0;
-    }
-  
-    75% {
-      left: -12vw;
-    }
-  
-    100% {
-      left: 0;
-    }
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  position: relative;
+  transition: 0.25s;
+}
+button:hover {
+  transform: translateY(4px);
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  #jsInvaders {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  button {
+    background-color: #eaeaea;
   }
 }

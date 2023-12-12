@@ -1,26 +1,50 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
+import playerShip from "./assets/player_ship.png"
+import enemy1 from "./assets/enemy_1.png"
+import enemy2 from "./assets/enemy_2.png"
 import "./App.css"
 
 const enemyTypes = {
   basic: `<div class="enemy-row basic"}>
-    <span class="enemy"></span>
-    <span class="enemy"></span>
-    <span class="enemy"></span>
-    <span class="enemy"></span>
-    <span class="enemy"></span>
-    <span class="enemy"></span>
-    <span class="enemy"></span>
-    <span class="enemy"></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
   </div>`,
   fast: `<div class="enemy-row fast"}>
-    <span class="enemy"></span>
-    <span class="enemy"></span>
-    <span class="enemy"></span>
-    <span class="enemy"></span>
-    <span class="enemy"></span>
-    <span class="enemy"></span>
-    <span class="enemy"></span>
-    <span class="enemy"></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+  </div>`,
+  resistant: ``,
+  "basic reverse": `<div class="enemy-row basic reverse"}>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy1}" width="24" height="24" /></span>
+  </div>`,
+  "fast reverse": `<div class="enemy-row fast reverse"}>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
+    <span class="enemy"><img src="${enemy2}" width="24" height="24" /></span>
   </div>`
 }
 
@@ -36,58 +60,90 @@ function checkCollision(elm1: Element, elm2: Element) {
 }
 
 function App() {
-  let score = 0
+  let score = useRef(0)
   let isReloading = false
+  const RELOAD_TIME = 500
+  const SHOOTING_SPEED = 1000
+  const SPAWN_SPEED = 10000
+  const gameRef = useRef<HTMLDivElement>(null)
   const playerRef = useRef<HTMLDivElement>(null)
+  const enemiesAreaRef = useRef<HTMLDivElement>(null)
+  const [showGameOver, setShowGameOver] = useState(false)
+
+  const reload = () => {
+    isReloading = true
+    setTimeout(() => isReloading = false, RELOAD_TIME)
+  }
   
-  const shoot = () => {
+  const shoot = (player: HTMLElement, game: HTMLElement) => {
     if (isReloading) return
-    console.log("PEW!")
-    if (!playerRef.current) return
-    const game = document.getElementById("game")
-    if (!game) return
     const missile = document.createElement("div")
     missile.className = "missile"
-    missile.style.left = `calc(${playerRef.current.style.left} + 0.9rem)`
+    missile.style.left = `calc(${player.style.left} + 0.9rem)`
     game.appendChild(missile)
-    isReloading = true
-    setTimeout(() => missile.remove() , 1000)
-    setTimeout(() => isReloading = false, 500)
+    setTimeout(() => missile.remove() , SHOOTING_SPEED)
+    reload()
+  }
+
+  const moveLeft = (player: HTMLElement) => {
+    const currentPosition = +player.style.left.replace(/%/, "")
+    const newPosition = currentPosition > 2 ? currentPosition - 2 : 2
+    player.style.left = `${newPosition}%`
+  }
+
+  const moveRight = (player: HTMLElement) => {
+    const currentPosition = +player.style.left.replace(/%/, "")
+    const newPosition = currentPosition < 94 ? currentPosition + 2 : 94
+    player.style.left = `${newPosition}%`
   }
 
   const process = (event: KeyboardEvent) => {
-    if (!playerRef.current) return
-    if (event.key === "ArrowLeft") {
-      const currentPosition = +playerRef.current.style.left.replace(/%/, "")
-      const newPosition = currentPosition > 2 ? currentPosition - 2 : 2
-      playerRef.current.style.left = `${newPosition}%`
-    } else if (event.key === "ArrowRight") {
-      const currentPosition = +playerRef.current.style.left.replace(/%/, "")
-      const newPosition = currentPosition < 94 ? currentPosition + 2 : 94
-      playerRef.current.style.left = `${newPosition}%`
-    } else if (event.code === "Space") {
-      shoot()
+    if (!gameRef.current || !playerRef.current) return
+    if (event.key === "ArrowLeft") moveLeft(playerRef.current)
+    else if (event.key === "ArrowRight") moveRight(playerRef.current)
+    else if (event.code === "Space") shoot(playerRef.current, gameRef.current)
+  }
+
+  const calculateEnemyType = (score: number) => {
+    let type: "basic" | "fast" | "basic reverse" | "fast reverse" = "basic"
+    const rng = Math.floor(Math.random() * 100) + 1
+    if (score >= 50 && score < 200) type = rng > 50 ? "fast" : "basic"
+    else if (score >= 200) {
+      if (rng < 25) type = "basic"
+      else if (rng < 50) type = "fast"
+      else if (rng < 75) type = "basic reverse"
+      else type = "fast reverse"
     }
+    return type
+  }
+
+  const spawnEnemies = (enemiesArea: HTMLElement) => {
+    enemiesArea.innerHTML += enemyTypes[calculateEnemyType(score.current)]
+    if (score.current >= 500) enemiesArea.innerHTML += enemyTypes[calculateEnemyType(score.current)]
+  }
+
+  const killEnemy = (missile: Element, enemy: Element) => {
+    missile.remove()
+    enemy.classList.add("dead")
+    score.current++
+    document.getElementById("score")!.innerText = score.current.toString().padStart(6, "0")
   }
 
   useEffect(() => {
     if (!playerRef.current) return
-    playerRef.current.style.bottom = "1rem"
+    playerRef.current.style.bottom = "24px"
     playerRef.current.style.left = `48%`
     document.addEventListener("keydown", process)
     return () => {
       document.removeEventListener("keydown", process)
     }
-  }, [])
+  }, [showGameOver])
 
   useEffect(() => {
     const spawnerId = setInterval(() => {
-      const enemiesDiv = document.getElementById("enemies")
-      if (!enemiesDiv) return
-      let type: "basic" | "fast" = "basic"
-      if (score >= 50) type = Math.random() > 0.5 ? "fast" : "basic"
-      enemiesDiv.innerHTML += enemyTypes[type]
-    }, 10 * 1000)
+      if (!enemiesAreaRef.current) return
+      spawnEnemies(enemiesAreaRef.current)
+    }, SPAWN_SPEED)
 
     const collisionCheckerId = setInterval(() => {
       const missiles = document.querySelectorAll(".missile")
@@ -95,31 +151,24 @@ function App() {
       missiles.forEach((missile) => {
         enemies.forEach((enemy) => {
           const isColliding = checkCollision(missile, enemy)
-          if (isColliding) {
-            missile.remove()
-            enemy.classList.add("dead")
-            score++
-            document.getElementById("score")!.innerText = score.toString()
-          }
+          if (isColliding) killEnemy(missile, enemy)
         })
       })
     }, 1)
 
     const deadRowCleanerId = setInterval(() => {
-      const deadRows = document.querySelectorAll(".enemy-row:first-child:not(:has(.enemy:not(.dead)))")
-      deadRows.forEach((row) => row.remove())
+      const deadRow = document.querySelector(".enemy-row:first-child:not(:has(.enemy:not(.dead)))")
+      deadRow?.remove()
     }, 2000)
 
     const deathCheckerId = setInterval(() => {
       const enemies = document.querySelectorAll(".enemy:not(.dead)")
+      const playerCollider = document.getElementById("player-collider")!
       enemies.forEach((enemy) => {
         if (!playerRef.current) return
-        const isColliding = checkCollision(enemy, playerRef.current)
+        const isColliding = checkCollision(enemy, playerRef.current) || checkCollision(enemy, playerCollider)
         if (!isColliding) return
-        alert("YOU DIED!!!")
-        score = 0
-        document.getElementById("enemies")!.innerHTML = enemyTypes["basic"]
-        document.getElementById("score")!.innerText = score.toString()
+        setTimeout(() => setShowGameOver(true), 250)
       })
     })
 
@@ -129,28 +178,48 @@ function App() {
       clearInterval(deadRowCleanerId)
       clearInterval(deathCheckerId)
     }
-  }, [])
+  }, [showGameOver])
+
+  const restart = () => {
+    console.log("Sua pontuação foi: ", score.current)
+    score.current = 0
+    setShowGameOver(false)
+    document.getElementById("score")!.innerText = "000000"
+  }
 
   return (
-    <>
-      <h1>Space Invaders - Score: <span id="score">{score}</span></h1>
+    <div id="jsInvaders">
+      <div id="title">
+        <span>Space Invaders</span>
+        <span>Score: <span id="score">000000</span></span>
+      </div>
       
-      <div id="game">
-        <div id="enemies">
-          <div className="enemy-row basic">
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
-            <span className="enemy"></span>
+      {showGameOver ? (
+        <div id="gameover">
+          <p>VOCÊ PERDEU! {"=("}</p>
+          <button onClick={restart}>Tentar novamente?</button>
+        </div>
+      ) : (
+        <div id="game" ref={gameRef}>
+          <div id="enemies" ref={enemiesAreaRef}>
+            <div className="enemy-row basic">
+              <span className="enemy"><img src={enemy1} width={24} height={24} /></span>
+              <span className="enemy"><img src={enemy1} width={24} height={24} /></span>
+              <span className="enemy"><img src={enemy1} width={24} height={24} /></span>
+              <span className="enemy"><img src={enemy1} width={24} height={24} /></span>
+              <span className="enemy"><img src={enemy1} width={24} height={24} /></span>
+              <span className="enemy"><img src={enemy1} width={24} height={24} /></span>
+              <span className="enemy"><img src={enemy1} width={24} height={24} /></span>
+              <span className="enemy"><img src={enemy1} width={24} height={24} /></span>
+            </div>
+          </div>
+          <div id="player" ref={playerRef}>
+            <div id="player-collider"></div>
+            <img src={playerShip} />
           </div>
         </div>
-        <div id="player" ref={playerRef}></div>
-      </div>
-    </>
+      )}
+    </div>
   )
 }
 
